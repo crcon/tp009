@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>青海省发电侧容量电价测算工具</title>
+<style>
+  :root{
+    --bg:#f5f7fa; --card:#fff; --primary:#0b6cf2; --accent:#0a8f5b;
+    --warn:#d97706; --danger:#dc2626; --border:#e3e8ef; --muted:#6b7280;
+    --text:#1f2937;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6}
+  .container{max-width:1280px;margin:0 auto;padding:20px}
+  h1{font-size:22px;margin:0 0 4px}
+  h2{font-size:16px;margin:0 0 12px;padding-left:10px;border-left:4px solid var(--primary);color:#111}
+  h3{font-size:14px;margin:14px 0 8px;color:#374151}
+  .sub{color:var(--muted);font-size:12px;margin-bottom:18px}
+  .grid{display:grid;gap:14px}
+  .grid-2{grid-template-columns:1fr 1fr}
+  .grid-3{grid-template-columns:repeat(3,1fr)}
+  .grid-4{grid-template-columns:repeat(4,1fr)}
+  @media (max-width:900px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;box-shadow:0 1px 2px rgba(0,0,0,.03);margin-bottom:16px}
+  .field{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+  .field label{font-size:12.5px;color:#374151;font-weight:600;display:flex;align-items:center;gap:4px}
+  .field .hint{font-size:11.5px;color:var(--muted);line-height:1.4}
+  .field input,.field select{padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:13.5px;font-family:inherit;background:#fff}
+  .field input:focus,.field select:focus{outline:none;border-color:var(--primary)}
+  .row{display:flex;gap:8px;align-items:center}
+  .unit{font-size:12px;color:var(--muted);min-width:40px}
+  .badge{display:inline-block;background:#eef4ff;color:var(--primary);padding:2px 8px;border-radius:10px;font-size:11px;margin-left:6px}
+  .formula{background:#fafbfc;border:1px dashed #cbd5e1;border-radius:6px;padding:8px 12px;font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:12.5px;color:#334155;margin:4px 0 10px}
+  .result-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+  .stat{background:linear-gradient(135deg,#f8fafc,#eef4ff);border:1px solid #dde7f5;border-radius:8px;padding:12px}
+  .stat .k{font-size:11.5px;color:var(--muted)}
+  .stat .v{font-size:20px;font-weight:700;color:var(--primary);margin-top:4px}
+  .stat .v.green{color:var(--accent)}
+  .stat .v.red{color:var(--danger)}
+  .stat small{display:block;font-size:11px;color:var(--muted);font-weight:400;margin-top:3px}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th,td{padding:7px 8px;border-bottom:1px solid var(--border);text-align:right}
+  th{background:#f8fafc;font-weight:600;color:#374151;text-align:right}
+  th:first-child,td:first-child{text-align:left}
+  .preset{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .preset button{padding:6px 12px;border:1px solid var(--primary);background:#fff;color:var(--primary);border-radius:6px;cursor:pointer;font-size:12.5px}
+  .preset button:hover{background:var(--primary);color:#fff}
+  .step{background:#fff8ec;border-left:3px solid var(--warn);padding:8px 12px;border-radius:4px;margin-bottom:6px;font-size:12.5px;font-family:ui-monospace,Menlo,monospace}
+  .note{background:#f0f9ff;border-left:3px solid #0ea5e9;padding:10px 14px;border-radius:4px;font-size:12.5px;margin:10px 0;color:#075985}
+  details{margin-top:8px}
+  summary{cursor:pointer;font-weight:600;color:var(--primary);font-size:13px;padding:4px 0}
+  .tag{display:inline-block;padding:1px 6px;border-radius:4px;font-size:11px;margin-left:4px}
+  .tag-blue{background:#dbeafe;color:#1e40af}
+  .tag-green{background:#d1fae5;color:#065f46}
+  .tag-orange{background:#fed7aa;color:#9a3412}
+  .footer{text-align:center;color:var(--muted);font-size:11.5px;padding:16px}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="card" style="background:linear-gradient(135deg,#0b6cf2,#0a8f5b);color:#fff;border:none">
+  <h1 style="color:#fff">青海省发电侧容量电价测算工具</h1>
+  <div style="opacity:.92;font-size:13px;margin-top:4px">
+    依据《关于建立青海省发电侧容量电价机制的通知（征求意见稿）》及《青海省发电侧可靠容量补偿机制（征求意见稿）》
+    · 仅测算<b>容量电价收入</b>，不含电能量市场与辅助服务收益
+  </div>
+</div>
+
+<!-- ============ 政策情景预设 ============ -->
+<div class="card">
+  <h2>① 政策参数</h2>
+  <div class="sub">参考两轮征求意见稿数值（2月稿：165元/1.04/4h；4月稿：185元/0.92/8h），可自由调整以模拟任意场景</div>
+
+  <div class="grid grid-3">
+    <div class="field">
+      <label>容量补偿标准 <span class="badge">元/(kW·年)</span></label>
+      <div class="hint">单位有效容量每年获得的补偿</div>
+      <input type="number" id="price" value="165" step="1">
+    </div>
+    <div class="field">
+      <label>容量供需系数 K</label>
+      <div class="hint">= 系统可靠容量需求 / 系统可靠容量供给。&gt;1 表示容量不足、激励投资；&lt;1 表示容量富余、补偿打折</div>
+      <input type="number" id="kRatio" value="1.04" step="0.01">
+    </div>
+    <div class="field">
+      <label>系统净负荷高峰持续时长 T <span class="badge">小时</span></label>
+      <div class="hint">取近3年净负荷高峰对应时段最大持续小时数。<b>该参数对储能影响最大</b><br><span style="color:#475569">系统净负荷 = 省内负荷（含线损）+ 外送需求 + 备用容量 − 省内风光出力 − 季调节及以下水电出力 − 外购电力 − 可中断负荷</span></div>
+      <input type="number" id="peakHours" value="4" step="0.5">
+    </div>
+  </div>
+
+  <div class="note">
+    <b>核心公式：</b>容量电费 = 申报容量(kW) × 容量供需系数K × 容量补偿标准(元/kW·年)
+    <br>申报容量 ≤ 有效容量；有效容量随电源类型差异显著（见下）
+  </div>
+</div>
+
+<!-- ============ 技术参数 ============ -->
+<div class="card">
+  <h2>② 项目技术参数</h2>
+
+  <div class="grid grid-2">
+    <div class="field">
+      <label>电源类型</label>
+      <div class="hint">不同电源类型对应不同厂用电率与有效容量计算方式</div>
+      <select id="srcType" onchange="onTypeChange()">
+        <option value="storage">新型储能（独立、未参与配储）</option>
+        <option value="coal">燃煤发电</option>
+        <option value="gas">燃气发电</option>
+        <option value="csp">光热发电（未享其他补贴）</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>厂用电率 <span class="badge">%</span></label>
+      <div class="hint">机组自用电占发电量比例，扣减后为净上网能力。政策暂定值：燃煤6.05% / 燃气3.75% / 光热21.53% / 储能10.39%</div>
+      <input type="number" id="auxRate" value="10.39" step="0.01">
+    </div>
+  </div>
+
+  <div class="grid grid-4">
+    <div class="field">
+      <label>额定/最大功率 P <span class="badge">MW</span></label>
+      <div class="hint">机组铭牌功率（储能为最大放电功率）</div>
+      <input type="number" id="powerMW" value="200" step="1">
+    </div>
+    <div class="field" id="durationField">
+      <label>满功率放电时长 h <span class="badge">小时</span></label>
+      <div class="hint">仅储能填写。储能额定电量 E = P × h（自动计算）</div>
+      <input type="number" id="durationH" value="4" step="0.5">
+    </div>
+    <div class="field" id="energyField">
+      <label>储能额定电量 E <span class="badge">MWh</span></label>
+      <div class="hint">由 P × h 自动计算，不可编辑</div>
+      <input type="number" id="energyMWh" value="800" readonly style="background:#f3f4f6;color:#374151">
+    </div>
+    <div class="field">
+      <label>申报容量比例 <span class="badge">%</span></label>
+      <div class="hint">申报容量占有效容量的比例（一般≤100%）。机组按月申报，不得超核定有效容量</div>
+      <input type="number" id="declareRatio" value="100" step="1">
+    </div>
+  </div>
+</div>
+
+<!-- ============ 计算结果 ============ -->
+<div class="card">
+  <h2>③ 测算结果</h2>
+
+  <h3>计算过程</h3>
+  <div id="steps"></div>
+
+  <h3 style="margin-top:14px">关键指标</h3>
+  <div class="result-grid" id="results"></div>
+
+  <details>
+    <summary>展开：公式逐项说明</summary>
+    <div style="font-size:12.5px;line-height:1.8;padding:8px 4px">
+      <div class="formula">① 满功率放电时长 = 储能电量E ÷ 功率P</div>
+      <div class="formula">② 可靠容量系数（仅储能） = (1 − 厂用电率) × MIN(满功率放电时长 ÷ 系统净负荷高峰持续时长T, 100%)</div>
+      <div class="formula">③ 有效容量（火/气/光热）= 额定容量 × (1 − 厂用电率)</div>
+      <div class="formula">④ 有效容量（储能） = 最大放电功率 × 可靠容量系数</div>
+      <div class="formula">⑤ 申报容量 = 有效容量 × 申报比例</div>
+      <div class="formula">⑥ 年度容量电费 = 申报容量(kW) × K × 容量补偿标准</div>
+      <div class="formula">⑦ 单位装机容量电费 = 年度容量电费 ÷ 装机功率(kW)</div>
+    </div>
+  </details>
+</div>
+
+<div class="note">
+  <b>主要参数政策依据速查：</b><br>
+  • 容量补偿标准：参考发改价格〔2023〕1501号，2026年青海初定 165 元/(kW·年)，4月稿拟提至 185 元；后期按边际机组固定成本回收比例（≥50%）调整<br>
+  • 容量供需系数K：1.04（2月稿）/ 0.92（4月稿）；按年核定<br>
+  • 系统净负荷高峰持续时长T：取近3年净负荷高峰前0.2%时段（4h）或前3%时段（8h）<br>
+  • 厂用电率：燃煤6.05% / 燃气3.75% / 光热21.53% / 储能10.39%<br>
+  • 适用对象：合规煤电、合规燃气、未享补贴光热、未参与配储的独立新型储能；抽水蓄能暂未纳入<br>
+  • 分摊：按月度外送电量与省内全体工商业用户用电量比例分摊
+</div>
+
+<div class="footer">本工具仅用于测算分析，最终参数以青海省发改委正式发布的政策文件为准</div>
+
+</div>
+
+<script>
+const fmt = (n, d=2) => isFinite(n) ? Number(n).toLocaleString('zh-CN',{maximumFractionDigits:d, minimumFractionDigits:d}) : '—';
+const auxDefault = {storage:10.39, coal:6.05, gas:3.75, csp:21.53};
+const typeName = {storage:'新型储能', coal:'燃煤', gas:'燃气', csp:'光热'};
+
+function set(id,v){ document.getElementById(id).value=v; }
+function num(id){ return parseFloat(document.getElementById(id).value)||0; }
+
+function onTypeChange(){
+  const t = document.getElementById('srcType').value;
+  document.getElementById('auxRate').value = auxDefault[t];
+  const show = (t==='storage') ? '' : 'none';
+  document.getElementById('durationField').style.display = show;
+  document.getElementById('energyField').style.display = show;
+  calc();
+}
+
+function calcCore(P_MW, E_MWh, aux, T, K, price, declareRatio, type){
+  const auxR = aux/100;
+  let dur = (P_MW>0 && E_MWh>0) ? E_MWh/P_MW : 0;
+  let reliCoef, effMW;
+  if(type==='storage'){
+    reliCoef = (1-auxR) * Math.min(dur/T, 1);
+    effMW = P_MW * reliCoef;
+  } else {
+    reliCoef = (1-auxR);
+    effMW = P_MW * reliCoef;
+  }
+  const declMW = effMW * declareRatio/100;
+  const declKW = declMW * 1000;
+  const yearFee = declKW * K * price;          // 元
+  const monthFee = yearFee/12;
+  const perKw = P_MW>0 ? yearFee/(P_MW*1000) : 0;
+  return {dur, reliCoef, effMW, declMW, declKW, yearFee, monthFee, perKw};
+}
+
+function calc(){
+  const P = num('powerMW'), h = num('durationH'), aux = num('auxRate');
+  const T = num('peakHours'), K = num('kRatio'), price = num('price');
+  const dr = num('declareRatio'); const type = document.getElementById('srcType').value;
+
+  // 储能：电量 E = P × h（自动计算）
+  const E = (type==='storage') ? P*h : 0;
+  document.getElementById('energyMWh').value = E ? fmt(E,1) : '';
+
+  const r = calcCore(P, E, aux, T, K, price, dr, type);
+
+  // 计算过程
+  const steps = document.getElementById('steps');
+  const auxR = aux/100;
+  if(type==='storage'){
+    steps.innerHTML = `
+      <div class="step">储能电量 E = ${P} MW × ${h} h = <b>${fmt(E)} MWh</b></div>
+      <div class="step">满功率放电时长 = ${fmt(E)} ÷ ${P} = <b>${fmt(r.dur)} 小时</b></div>
+      <div class="step">可靠容量系数 = (1 − ${aux}%) × MIN(${fmt(r.dur)}/${T}, 100%) = ${fmt((1-auxR)*100)}% × ${fmt(Math.min(r.dur/T,1)*100)}% = <b>${fmt(r.reliCoef*100)}%</b></div>
+      <div class="step">有效容量 = ${P} MW × ${fmt(r.reliCoef*100)}% = <b>${fmt(r.effMW)} MW</b></div>
+      <div class="step">申报容量 = ${fmt(r.effMW)} × ${dr}% = <b>${fmt(r.declMW)} MW = ${fmt(r.declKW,0)} kW</b></div>
+      <div class="step">年度容量电费 = ${fmt(r.declKW,0)} kW × ${K} × ${price} 元 = <b>${fmt(r.yearFee/10000)} 万元</b></div>
+    `;
+  } else {
+    steps.innerHTML = `
+      <div class="step">有效容量 = ${P} MW × (1 − ${aux}%) = <b>${fmt(r.effMW)} MW</b>（${typeName[type]}不计可靠容量系数）</div>
+      <div class="step">申报容量 = ${fmt(r.effMW)} × ${dr}% = <b>${fmt(r.declMW)} MW = ${fmt(r.declKW,0)} kW</b></div>
+      <div class="step">年度容量电费 = ${fmt(r.declKW,0)} kW × ${K} × ${price} 元 = <b>${fmt(r.yearFee/10000)} 万元</b></div>
+    `;
+  }
+
+  // 关键指标
+  document.getElementById('results').innerHTML = `
+    ${type==='storage' ? `<div class="stat"><div class="k">满功率放电时长</div><div class="v">${fmt(r.dur)} h</div></div>` : ''}
+    <div class="stat"><div class="k">可靠容量系数</div><div class="v">${fmt(r.reliCoef*100)}%</div></div>
+    <div class="stat"><div class="k">有效容量</div><div class="v green">${fmt(r.effMW)} MW</div><small>${fmt(r.declKW,0)} kW (申报)</small></div>
+    <div class="stat"><div class="k">年度容量电费</div><div class="v green">${fmt(r.yearFee/10000)} 万元</div><small>${fmt(r.yearFee,0)} 元/年</small></div>
+    <div class="stat"><div class="k">月度容量电费</div><div class="v">${fmt(r.monthFee/10000)} 万元</div></div>
+    <div class="stat"><div class="k">单位装机容量电费</div><div class="v">${fmt(r.perKw)} 元/(kW·年)</div><small>含K与可靠容量系数后等效值</small></div>
+  `;
+}
+
+document.querySelectorAll('input,select').forEach(el=>el.addEventListener('input', calc));
+calc();
+</script>
+</body>
+</html>
